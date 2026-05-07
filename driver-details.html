@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Driver Details</title>
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        font-family: Helvetica, Arial, sans-serif;
+        background: linear-gradient(135deg, #ecfeff, #cffafe);
+      }
+
+      .card {
+        width: min(92vw, 460px);
+        background: #ffffff;
+        border-radius: 14px;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15);
+        padding: 24px;
+      }
+
+      h1 {
+        margin-top: 0;
+      }
+
+      form {
+        display: grid;
+        gap: 12px;
+      }
+
+      label {
+        font-size: 14px;
+        color: #1e293b;
+      }
+
+      input {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 10px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-size: 14px;
+      }
+
+      .row {
+        display: flex;
+        gap: 10px;
+      }
+
+      .btn {
+        border: 0;
+        border-radius: 10px;
+        padding: 11px 14px;
+        font-size: 15px;
+        cursor: pointer;
+      }
+
+      .btn-submit {
+        background: #0f766e;
+        color: #ffffff;
+      }
+
+      .btn-back {
+        background: #e2e8f0;
+        color: #0f172a;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="card">
+      <h1>Driver Details</h1>
+      <form id="driverForm">
+        <div>
+          <label for="aadhar">Aadhar Number</label>
+          <input id="aadhar" name="aadhar" type="text" placeholder="Enter aadhar number" />
+        </div>
+
+        <div>
+          <label for="licenceDocument">Licence Document</label>
+          <input id="licenceDocument" name="licenceDocument" type="file" accept="image/*" required />
+        </div>
+
+        <div>
+          <label for="phone">Phone Number</label>
+          <input id="phone" name="phone" type="text" placeholder="Enter phone number" />
+        </div>
+
+        <div class="row">
+          <button class="btn btn-submit" type="submit">Continue</button>
+          <a class="btn btn-back" href="role-selector.html">Back</a>
+        </div>
+      </form>
+    </main>
+
+    <script>
+      const driverForm = document.getElementById('driverForm');
+      driverForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        alert('Driver details saved.');
+        window.location.href = 'role-selector.html';
+      });
+    </script>
+  </body>
+</html>

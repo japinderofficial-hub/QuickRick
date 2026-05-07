@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QuickRick Role Select</title>
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        font-family: Helvetica, Arial, sans-serif;
+        background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+      }
+
+      .card {
+        width: min(92vw, 420px);
+        background: #ffffff;
+        border-radius: 14px;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15);
+        padding: 28px;
+        text-align: center;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+      }
+
+      p {
+        margin: 0 0 22px;
+        color: #334155;
+      }
+
+      .actions {
+        display: grid;
+        gap: 12px;
+      }
+
+      .btn {
+        display: inline-block;
+        text-decoration: none;
+        border: 0;
+        border-radius: 10px;
+        padding: 12px 16px;
+        font-size: 16px;
+        cursor: pointer;
+        color: #ffffff;
+      }
+
+      .btn-driver {
+        background: #0f766e;
+      }
+
+      .btn-passenger {
+        background: #1d4ed8;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="card">
+      <h1>Choose Your Role</h1>
+      <p>Select one option to continue.</p>
+
+      <div class="actions">
+        <a class="btn btn-driver" href="driver-details.html">Driver</a>
+        <a class="btn btn-passenger" href="passenger-details.html">Passenger</a>
+      </div>
+    </main>
+  </body>
+</html>
