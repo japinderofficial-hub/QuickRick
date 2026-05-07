@@ -107,4 +107,4 @@ git clone https://github.com/japinderofficial-hub/QuickRick.git
 cd QuickRick
 code .
 npm install
-npm run dev
+npm run dev.
