@@ -12,6 +12,10 @@ export const SimProvider = ({ children }) => {
   const [demands, setDemands] = useState([]);
   const [autos, setAutos] = useState([]);
   const [isLocating, setIsLocating] = useState(false);
+  
+  // Booking States: null, 'searching', 'accepted', 'enroute', 'completed'
+  const [bookingStatus, setBookingStatus] = useState(null);
+  const [activeRide, setActiveRide] = useState(null);
 
   // Initialize simulated autos
   useEffect(() => {
@@ -22,24 +26,76 @@ export const SimProvider = ({ children }) => {
         lng: userLocation.lng + (Math.random() - 0.5) * 0.02,
       },
       heading: Math.random() * 360,
+      name: `Ramesh ${i+1}`,
+      rating: (4 + Math.random()).toFixed(1)
     }));
     setAutos(initialAutos);
-  }, []);
+  }, [userLocation]);
 
   // Simulate auto movement
   useEffect(() => {
     const interval = setInterval(() => {
-      setAutos(prevAutos => prevAutos.map(auto => ({
-        ...auto,
-        position: {
-          lat: auto.position.lat + (Math.random() - 0.5) * 0.0002,
-          lng: auto.position.lng + (Math.random() - 0.5) * 0.0002,
-        },
-        heading: auto.heading + (Math.random() - 0.5) * 20,
-      })));
+      setAutos(prevAutos => prevAutos.map(auto => {
+        // If this auto is part of an active ride, move it towards the user or destination
+        if (activeRide && activeRide.autoId === auto.id) {
+          const target = bookingStatus === 'accepted' ? userLocation : activeRide.destination;
+          const latDiff = target.lat - auto.position.lat;
+          const lngDiff = target.lng - auto.position.lng;
+          const distance = Math.sqrt(latDiff * latDiff + lngDiff * lngDiff);
+          
+          if (distance < 0.0001) {
+             if (bookingStatus === 'accepted') setBookingStatus('enroute');
+             if (bookingStatus === 'enroute') setBookingStatus('completed');
+          }
+
+          return {
+            ...auto,
+            position: {
+              lat: auto.position.lat + (latDiff * 0.1),
+              lng: auto.position.lng + (lngDiff * 0.1),
+            },
+            heading: Math.atan2(lngDiff, latDiff) * (180 / Math.PI)
+          };
+        }
+
+        return {
+          ...auto,
+          position: {
+            lat: auto.position.lat + (Math.random() - 0.5) * 0.0002,
+            lng: auto.position.lng + (Math.random() - 0.5) * 0.0002,
+          },
+          heading: auto.heading + (Math.random() - 0.5) * 20,
+        };
+      }));
     }, 2000);
     return () => clearInterval(interval);
-  }, []);
+  }, [activeRide, bookingStatus, userLocation]);
+
+  const startBooking = (destinationName, rideType) => {
+    setBookingStatus('searching');
+    
+    // Simulate finding a driver
+    setTimeout(() => {
+      const nearestAuto = autos[Math.floor(Math.random() * autos.length)];
+      setActiveRide({
+        autoId: nearestAuto.id,
+        autoName: nearestAuto.name,
+        rating: nearestAuto.rating,
+        destinationName,
+        destination: { 
+          lat: userLocation.lat + (Math.random() - 0.5) * 0.01, 
+          lng: userLocation.lng + (Math.random() - 0.5) * 0.01 
+        },
+        rideType
+      });
+      setBookingStatus('accepted');
+    }, 3000);
+  };
+
+  const cancelBooking = () => {
+    setBookingStatus(null);
+    setActiveRide(null);
+  };
 
   const login = (phone) => {
     setIsLoggedIn(true);
@@ -92,7 +148,11 @@ export const SimProvider = ({ children }) => {
       isLoggedIn,
       login,
       logout,
-      user
+      user,
+      bookingStatus,
+      activeRide,
+      startBooking,
+      cancelBooking
     }}>
       {children}
     </SimContext.Provider>

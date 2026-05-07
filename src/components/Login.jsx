@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useSim } from '../context/SimContext';
 import { motion } from 'framer-motion';
 import { ChevronRight, ArrowLeft } from 'lucide-react';
@@ -7,6 +7,8 @@ const Login = () => {
   const { login } = useSim();
   const [step, setStep] = useState(1);
   const [phone, setPhone] = useState('');
+  const [otp, setOtp] = useState(['', '', '', '']);
+  const otpRefs = [useRef(), useRef(), useRef(), useRef()];
 
   const handleNext = () => {
     if (step === 1 && phone.length >= 10) {
@@ -15,6 +17,33 @@ const Login = () => {
       login(phone);
     }
   };
+
+  const handleOtpChange = (index, value) => {
+    if (!/^\d*$/.test(value)) return;
+
+    const newOtp = [...otp];
+    newOtp[index] = value.slice(-1);
+    setOtp(newOtp);
+
+    // Auto-focus next input
+    if (value && index < 3) {
+      otpRefs[index + 1].current.focus();
+    }
+  };
+
+  const handleKeyDown = (index, e) => {
+    // Handle backspace to focus previous input
+    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+      otpRefs[index - 1].current.focus();
+    }
+  };
+
+  // Auto-submit if OTP is fully filled
+  useEffect(() => {
+    if (otp.every(digit => digit !== '') && step === 2) {
+      setTimeout(handleNext, 300);
+    }
+  }, [otp]);
 
   return (
     <div className="fixed inset-0 z-[3000] bg-white text-black flex flex-col items-center justify-center">
@@ -73,12 +102,17 @@ const Login = () => {
             ) : (
               <div className="space-y-8">
                 <div className="flex gap-4">
-                  {[1, 2, 3, 4].map((i) => (
+                  {otp.map((digit, i) => (
                     <input
                       key={i}
-                      autoFocus={i === 1}
+                      ref={otpRefs[i]}
+                      autoFocus={i === 0}
                       type="text"
+                      inputMode="numeric"
                       maxLength={1}
+                      value={digit}
+                      onChange={(e) => handleOtpChange(i, e.target.value)}
+                      onKeyDown={(e) => handleKeyDown(i, e)}
                       className="w-full h-16 bg-gray-100 rounded-lg text-center text-3xl font-bold focus:bg-white focus:ring-2 focus:ring-black outline-none transition-all"
                       placeholder="•"
                     />
@@ -87,7 +121,10 @@ const Login = () => {
                 <div className="flex flex-col gap-4">
                   <button
                     onClick={handleNext}
-                    className="w-full bg-black text-white py-4 rounded-lg font-bold text-lg hover:bg-zinc-800 transition-all"
+                    disabled={otp.some(digit => digit === '')}
+                    className={`w-full py-4 rounded-lg font-bold text-lg transition-all ${
+                      otp.every(digit => digit !== '') ? 'bg-black text-white hover:bg-zinc-800' : 'bg-gray-100 text-gray-400'
+                    }`}
                   >
                     Verify and login
                   </button>

@@ -1,8 +1,5 @@
 import React from 'react';
 import { SimProvider, useSim } from './context/SimContext';
-import GoogleMap from './components/GoogleMap';
-import Header from './components/Header';
-import Controls from './components/Controls';
 import Login from './components/Login';
 import Home from './components/Home';
 import { motion, AnimatePresence } from 'framer-motion';

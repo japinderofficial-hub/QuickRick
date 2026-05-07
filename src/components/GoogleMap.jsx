@@ -1,5 +1,5 @@
-import React, { useState, useCallback } from 'react';
-import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-maps/api';
+import React, { useState, useCallback, useEffect } from 'react';
+import { GoogleMap, useJsApiLoader, Marker, Polyline } from '@react-google-maps/api';
 import { useSim } from '../context/SimContext';
 
 const containerStyle = {
@@ -7,7 +7,6 @@ const containerStyle = {
   height: '100%'
 };
 
-// Uber-style Silver map mode
 const mapStyles = [
   { "elementType": "geometry", "stylers": [{ "color": "#f5f5f5" }] },
   { "elementType": "labels.icon", "stylers": [{ "visibility": "off" }] },
@@ -30,11 +29,11 @@ const mapStyles = [
 ];
 
 const MyGoogleMap = () => {
-  const { userLocation, autos, demands, viewMode } = useSim();
+  const { userLocation, autos, demands, viewMode, bookingStatus, activeRide } = useSim();
   
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
-    googleMapsApiKey: "" // Use your API key here
+    googleMapsApiKey: "" // IMPORTANT: Insert your real Google Maps API Key here
   });
 
   const [map, setMap] = useState(null);
@@ -47,7 +46,17 @@ const MyGoogleMap = () => {
     setMap(null);
   }, []);
 
-  if (!isLoaded) return <div className="w-full h-full bg-gray-50 animate-pulse flex items-center justify-center text-gray-400 font-medium">Loading Map...</div>;
+  // Update map bounds when ride is active
+  useEffect(() => {
+    if (map && activeRide && window.google) {
+      const bounds = new window.google.maps.LatLngBounds();
+      bounds.extend(userLocation);
+      bounds.extend(activeRide.destination);
+      map.fitBounds(bounds, { top: 100, bottom: 100, left: 100, right: 100 });
+    }
+  }, [map, activeRide, userLocation]);
+
+  if (!isLoaded) return <div className="w-full h-full bg-gray-50 animate-pulse flex items-center justify-center text-gray-400 font-medium italic">Enter Google Maps API Key to view map...</div>;
 
   return (
     <GoogleMap
@@ -63,12 +72,13 @@ const MyGoogleMap = () => {
         clickableIcons: false,
       }}
     >
-      {/* User Location Marker - Uber Blue Pulsing effect can be added but let's stick to a clean black dot */}
+      {/* User Location Marker */}
       <Marker
         position={userLocation}
+        zIndex={10}
         icon={{
           path: "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z",
-          fillColor: "#000000",
+          fillColor: bookingStatus === 'enroute' ? "#276EF1" : "#000000",
           fillOpacity: 1,
           strokeWeight: 2,
           strokeColor: "#ffffff",
@@ -77,19 +87,60 @@ const MyGoogleMap = () => {
         }}
       />
 
-      {/* Show Autos for Passengers */}
-      {viewMode === 'passenger' && autos.map(auto => (
-        <Marker
-          key={auto.id}
-          position={auto.position}
+      {/* Destination Marker */}
+      {activeRide && (
+        <Marker 
+          position={activeRide.destination}
           icon={{
-            url: 'https://cdn-icons-png.flaticon.com/512/3202/3202926.png', // Keep the rickshaw icon but scale better
-            scaledSize: new window.google.maps.Size(32, 32),
-            anchor: new window.google.maps.Point(16, 16),
-            rotation: auto.heading
+            path: "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z",
+            fillColor: "#000000",
+            fillOpacity: 1,
+            strokeWeight: 2,
+            strokeColor: "#ffffff",
+            scale: 1.2,
+            anchor: new window.google.maps.Point(12, 24),
           }}
         />
-      ))}
+      )}
+
+      {/* Ride Path Polyline */}
+      {activeRide && (
+        <Polyline 
+          path={[userLocation, activeRide.destination]}
+          options={{
+            strokeColor: "#000000",
+            strokeOpacity: 0.5,
+            strokeWeight: 3,
+            icons: [{
+              icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, scale: 4 },
+              offset: '0',
+              repeat: '20px'
+            }],
+          }}
+        />
+      )}
+
+      {/* Show Autos for Passengers */}
+      {viewMode === 'passenger' && autos.map(auto => {
+        const isAssigned = activeRide && activeRide.autoId === auto.id;
+        const shouldShow = !bookingStatus || isAssigned;
+        
+        if (!shouldShow) return null;
+
+        return (
+          <Marker
+            key={auto.id}
+            position={auto.position}
+            zIndex={isAssigned ? 20 : 5}
+            icon={{
+              url: 'https://cdn-icons-png.flaticon.com/512/3202/3202926.png',
+              scaledSize: new window.google.maps.Size(isAssigned ? 48 : 32, isAssigned ? 48 : 32),
+              anchor: new window.google.maps.Point(isAssigned ? 24 : 16, isAssigned ? 24 : 16),
+              rotation: auto.heading
+            }}
+          />
+        );
+      })}
 
       {/* Show Demands for Drivers */}
       {viewMode === 'driver' && demands.map(demand => (
@@ -99,7 +150,7 @@ const MyGoogleMap = () => {
           icon={{
             path: window.google.maps.SymbolPath.CIRCLE,
             scale: 8,
-            fillColor: "#276EF1", // Uber Blue for pickup points
+            fillColor: "#276EF1",
             fillOpacity: 0.9,
             strokeWeight: 3,
             strokeColor: "#ffffff",

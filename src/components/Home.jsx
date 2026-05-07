@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSim } from '../context/SimContext';
 import GoogleMap from './GoogleMap';
 import Header from './Header';
-import { Search, Clock, Home as HomeIcon, Briefcase, MapPin, ChevronRight, ArrowLeft, Info, Calendar, CreditCard, ChevronDown, User } from 'lucide-react';
+import { Search, Clock, Home as HomeIcon, Briefcase, MapPin, ChevronRight, ArrowLeft, Info, Calendar, CreditCard, ChevronDown, User, Shield, Star, Phone, MessageSquare } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Home = () => {
-  const { viewMode, userLocation } = useSim();
+  const { viewMode, userLocation, bookingStatus, activeRide, startBooking, cancelBooking } = useSim();
   const [isSearching, setIsSearching] = useState(false);
   const [selectedRide, setSelectedRide] = useState('auto');
   const [destination, setDestination] = useState('');
@@ -17,6 +17,17 @@ const Home = () => {
     { id: 'intercity', name: 'Intercity', price: '₹450', time: '10 min', icon: '🏙️', desc: 'Travel between cities' }
   ];
 
+  // Auto-close search when booking starts
+  useEffect(() => {
+    if (bookingStatus === 'searching') {
+      setIsSearching(false);
+    }
+  }, [bookingStatus]);
+
+  const handleConfirm = () => {
+    startBooking(destination || 'Indiranagar Metro', selectedRide);
+  };
+
   return (
     <div className="relative h-full w-full flex flex-col bg-white overflow-hidden">
       {/* Header */}
@@ -26,7 +37,112 @@ const Home = () => {
         {/* Sidebar - Desktop / Bottom Sheet - Mobile */}
         <div className="w-full md:w-[400px] lg:w-[450px] bg-white z-20 flex flex-col shadow-2xl relative">
           <AnimatePresence mode="wait">
-            {!isSearching ? (
+            {bookingStatus === 'searching' ? (
+              <motion.div
+                key="searching-ui"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-6"
+              >
+                <div className="relative">
+                  <div className="w-32 h-32 border-4 border-black border-t-transparent rounded-full animate-spin"></div>
+                  <div className="absolute inset-0 flex items-center justify-center text-4xl">🛺</div>
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold">Connecting you to a ride</h2>
+                  <p className="text-gray-500 mt-2">Finding the best Rickshaw near you...</p>
+                </div>
+                <button 
+                  onClick={cancelBooking}
+                  className="uber-btn-secondary w-full max-w-xs"
+                >
+                  Cancel Request
+                </button>
+              </motion.div>
+            ) : bookingStatus === 'accepted' || bookingStatus === 'enroute' ? (
+              <motion.div
+                key="ride-active-ui"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex-1 flex flex-col"
+              >
+                <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-black text-white">
+                  <div>
+                    <h2 className="text-sm font-bold opacity-70 uppercase tracking-widest">
+                      {bookingStatus === 'accepted' ? 'Driver is arriving' : 'On your way'}
+                    </h2>
+                    <p className="text-xl font-bold">{bookingStatus === 'accepted' ? '2 min away' : '12 min to destination'}</p>
+                  </div>
+                  <Shield size={24} className="text-blue-400" />
+                </div>
+
+                <div className="p-6 flex-1 space-y-8 overflow-y-auto">
+                  {/* Driver Info */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center text-2xl relative">
+                        👤
+                        <div className="absolute -bottom-1 -right-1 bg-white shadow-md rounded-full px-1.5 py-0.5 flex items-center gap-1 text-[10px] font-bold">
+                          <Star size={10} className="fill-yellow-400 text-yellow-400" />
+                          {activeRide?.rating}
+                        </div>
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-xl">{activeRide?.autoName}</h3>
+                        <p className="text-gray-500 font-medium">KA 01 AB 1234 • White Bajaj</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                       <button className="p-3 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors"><Phone size={20} /></button>
+                       <button className="p-3 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors"><MessageSquare size={20} /></button>
+                    </div>
+                  </div>
+
+                  {/* Route Info */}
+                  <div className="space-y-4 pt-6 border-t border-gray-100">
+                     <div className="flex items-center gap-4">
+                        <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                        <p className="text-sm font-medium text-gray-600 truncate">Current Location</p>
+                     </div>
+                     <div className="flex items-center gap-4">
+                        <div className="w-2 h-2 bg-black"></div>
+                        <p className="text-sm font-bold truncate">{activeRide?.destinationName}</p>
+                     </div>
+                  </div>
+                </div>
+
+                <div className="p-6 border-t border-gray-100 bg-white space-y-4">
+                   <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2 font-bold">
+                         <CreditCard size={18} />
+                         <span>₹45.00</span>
+                      </div>
+                      <button onClick={cancelBooking} className="text-sm font-bold text-red-500">Cancel Ride</button>
+                   </div>
+                   <button className="w-full uber-btn-primary bg-blue-600 hover:bg-blue-700">
+                      Share Trip Status
+                   </button>
+                </div>
+              </motion.div>
+            ) : bookingStatus === 'completed' ? (
+              <motion.div
+                key="ride-completed-ui"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="flex-1 flex flex-col items-center justify-center p-8 text-center"
+              >
+                <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-4xl mb-6">✓</div>
+                <h2 className="text-3xl font-bold">You've arrived!</h2>
+                <p className="text-gray-500 mt-2 mb-8">Hope you enjoyed your ride with {activeRide?.autoName}.</p>
+                <button 
+                  onClick={cancelBooking}
+                  className="uber-btn-primary w-full"
+                >
+                  Done
+                </button>
+              </motion.div>
+            ) : !isSearching ? (
               <motion.div
                 key="default-home"
                 initial={{ opacity: 0, x: -20 }}
@@ -103,7 +219,6 @@ const Home = () => {
                   </div>
                 </div>
 
-                {/* Bottom Call to Action */}
                 <div className="p-6 border-t border-gray-100 bg-white">
                    <button className="w-full bg-black text-white py-4 rounded-xl text-lg font-bold hover:bg-zinc-800 transition-all">
                      See all rides
@@ -192,7 +307,7 @@ const Home = () => {
                   
                   <button 
                     className="w-full bg-black text-white py-4 rounded-xl text-xl font-bold hover:bg-zinc-800 transition-all active:scale-[0.98]"
-                    onClick={() => alert(`Booking ${selectedRide} to ${destination || 'selected destination'}...`)}
+                    onClick={handleConfirm}
                   >
                     Confirm {rideTypes.find(r => r.id === selectedRide)?.name}
                   </button>
