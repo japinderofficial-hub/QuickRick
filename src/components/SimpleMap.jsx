@@ -1,25 +1,35 @@
-// ───────────────────────────────────────────
-// 🗺️ COMPONENT — SIMPLE MAP
-// ───────────────────────────────────────────
-// Yeh Leaflet library se map dikhata hai.
-// Signal ON ho toh yellow circle bhi dikhata hai.
-
 import React from 'react';
-import { MapContainer, TileLayer, Marker, Circle } from 'react-leaflet';
-import { MAP_CENTER, MAP_ZOOM, SIGNAL_RADIUS, SIGNAL_COLOR, SIGNAL_OPACITY } from '../config';
+import { MapContainer, TileLayer, Marker, Circle, Popup } from 'react-leaflet';
+import L from 'leaflet';
+import { 
+  MAP_CENTER, MAP_ZOOM, SIGNAL_RADIUS, SIGNAL_COLOR, SIGNAL_OPACITY
+} from '../config';
 
-function SimpleMap({ isSignaling }) {
+const radarIcon = L.divIcon({
+  className: 'radar-container',
+  html: '<div class="radar-dot"></div>',
+  iconSize: [12, 12],
+  iconAnchor: [6, 6]
+});
+
+const rickshawIcon = L.divIcon({
+  className: 'rickshaw-container',
+  html: '<div class="rickshaw-icon">🛺</div>',
+  iconSize: [32, 32],
+  iconAnchor: [16, 16]
+});
+
+function SimpleMap({ isSignaling, role, nearbyPositions }) {
+  const searchIcon = role === 'passenger' ? rickshawIcon : radarIcon;
 
   return (
     <MapContainer center={MAP_CENTER} zoom={MAP_ZOOM} className="map-frame">
-
-      {/* Internet se map ki photo laata hai */}
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
-      {/* Map pe ek pin */}
-      <Marker position={MAP_CENTER} />
+      <Marker position={MAP_CENTER}>
+        <Popup>You are here</Popup>
+      </Marker>
 
-      {/* Agar signal ON hai toh yellow circle dikhao */}
       {isSignaling ? (
         <Circle
           center={MAP_CENTER}
@@ -32,6 +42,13 @@ function SimpleMap({ isSignaling }) {
         />
       ) : null}
 
+      {isSignaling && nearbyPositions.map((pos, i) => (
+        <Marker key={i} position={pos} icon={searchIcon}>
+          <Popup>
+            {role === 'passenger' ? "Driver #" : "Passenger #"} {i + 1}
+          </Popup>
+        </Marker>
+      ))}
     </MapContainer>
   );
 }

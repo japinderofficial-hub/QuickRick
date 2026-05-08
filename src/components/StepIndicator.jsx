@@ -1,41 +1,22 @@
-// ───────────────────────────────────────────
-// 🔘 COMPONENT — STEP INDICATOR (Progress Dots)
-// ───────────────────────────────────────────
-// Yeh upar gol-gol circles banata hai — Step 1, 2, 3...
-// Jo step ho chuka = green tick (✓)
-// Jo step abhi chal raha = yellow glow
-// Jo step baaki hai = grey number
-
 import React from 'react';
 import { DONE_SYMBOL } from '../config';
 
 function StepIndicator({ current, total }) {
-
-  // Ek khaali list banao — isme circles store honge
   var circles = [];
-
-  // Loop — 0 se total tak (jaise 0, 1, 2, 3)
   for (var i = 0; i < total; i++) {
-
-    // ─── CSS CLASS DECIDE KARO ───
-    var className = "step-dot";       // Default: grey
-
+    var className = "step-dot";
     if (i < current) {
-      className = "step-dot done";    // Purana step: green
+      className = "step-dot done";
     }
-
     if (i === current) {
-      className = "step-dot active";  // Current step: yellow glow
+      className = "step-dot active";
     }
 
-    // ─── CIRCLE KE ANDAR KYA LIKHNA HAI ───
-    var text = i + 1;                 // Default: number (1, 2, 3...)
-
+    var text = i + 1;
     if (i < current) {
-      text = DONE_SYMBOL;            // Purana step: tick mark (✓)
+      text = DONE_SYMBOL;
     }
 
-    // ─── CIRCLE BANAO AUR LIST MEIN DAALO ───
     circles.push(
       <div key={i} className={className}>
         {text}
@@ -43,7 +24,6 @@ function StepIndicator({ current, total }) {
     );
   }
 
-  // Saare circles ek line mein dikhao
   return (
     <div className="step-indicator">
       {circles}
